@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Супер Тапалка кота 2.0</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .score-box {
+            background: #4ecdc4;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+        }
+
+        #cat {
+            width: 200px;
+            height: 200px;
+            background-image: url('https://placekitten.com/200/200');
+            background-size: cover;
+            border-radius: 50%;
+            margin: 15px auto;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #ff9e7d;
+        }
+
+        #cat:active {
+            transform: scale(0.95);
+        }
+
+        .hit-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.5);
+            top: 0;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .powerups {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .powerup {
+            background: #ff9e7d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .powerup:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .powerup:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .cat-message {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+            min-height: 24px;
+            font-size: 14px;
+        }
+
+        .hearts {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .heart {
+            color: #ff6b6b;
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+
+        .combo {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            opacity: 0;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .level-bar {
+            height: 5px;
+            background: #eee;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .level-progress {
+            height: 100%;
+            background: #4ecdc4;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐱 Супер Тапалка кота 2.0 🐱</h1>
+        <div class="subtitle">Тапай быстрее, получай бонусы!</div>
+
+        <div class="level-bar">
+            <div class="level-progress" id="level-progress"></div>
+        </div>
+
+        <div class="score-container">
+            <div class="score-box">
+                🏆 Очки: <span id="score">0</span>
+            </div>
+            <div class="score-box">
+                ⏱ Время: <span id="time">30</span>с
+            </div>
+            <div class="score-box">
+                🔥 Комбо: <span id="combo">0</span>
+            </div>
+        </div>
+
+        <div id="cat">
+            <div class="hit-effect" id="hit-effect"></div>
+        </div>
+
+        <div class="cat-message" id="cat-message">Тапай котика для очков!</div>
+
+        <div class="hearts" id="hearts">
+            ❤️ ❤️ ❤️
+        </div>
+
+        <div class="powerups">
+            <button class="powerup" id="powerup-2x" data-cost="50">2x очки (50)</button>
+            <button class="powerup" id="powerup-time" data-cost="75">+10 сек (75)</button>
+            <button class="powerup" id="powerup-heal" data-cost="100">+1 жизнь (100)</button>
+            <button class="powerup" id="powerup-combo" data-cost="150">3x комбо (150)</button>
+        </div>
+    </div>
+
+    <div class="achievement" id="achievement"></div>
+
+    <script>
+
+        let score = 0;
+        let timeLeft = 30;
+        let lives = 3;
+        let gameActive = true;
+        let multiplier = 1;
+        let combo = 0;
+        let comboMultiplier = 1;
+        let lastTapTime = 0;
+        let level = 1;
+        let exp = 0;
+
+        const catMessages = [
+            "Мяу! Еще!",
+            "Хорошо тапаешь!",
+            "Не останавливайся!",
+            "Я люблю это!",
+            "Отлижи мою киску",
+            "Почти поймал меня!",
+            "Ты лучший!",
+            "Скоро обед?",
+            "Муррр...",
+            "Нежно!",
+            "Быстрее!",
+            "Ух ты!",
+            "Вау!",
+            "Потрясающе!",
+            "Невероятно!"
+        ];
+
+        const achievements = [
+            { score: 50, text: "Новичок: 50 очков!" },
+            { score: 100, text: "Любитель: 100 очков!" },
+            { score: 200, text: "Профи: 200 очков!" },
+            { score: 500, text: "Мастер: 500 очков!" }
+        ];
+        let achieved = [];
+
+        const catElement = document.getElementById('cat');
+        const scoreElement = document.getElementById('score');
+        const timeElement = document.getElementById('time');
+        const comboElement = document.getElementById('combo');
+        const hitEffect = document.getElementById('hit-effect');
+        const catMessageElement = document.getElementById('cat-message');
+        const heartsElement = document.getElementById('hearts');
+        const powerup2x = document.getElementById('powerup-2x');
+        const powerupTime = document.getElementById('powerup-time');
+        const powerupHeal = document.getElementById('powerup-heal');
+        const powerupCombo = document.getElementById('powerup-combo');
+        const levelProgress = document.getElementById('level-progress');
+        const achievementElement = document.getElementById('achievement');
+
+        const gameTimer = setInterval(() => {
+            if (!gameActive) return;
+
+            timeLeft--;
+            timeElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+
+            if (Date.now() - lastTapTime > 2000 && combo > 0) {
+                combo = 0;
+                comboElement.textContent = combo;
+                showMessage("Комбо сброшено!");
+            }
+        }, 1000);
+
+        catElement.addEventListener('click', () => {
+            if (!gameActive) return;
+
+            const now = Date.now();
+            const tapSpeed = now - lastTapTime;
+            lastTapTime = now;
+
+            hitEffect.style.opacity = '0.8';
+            setTimeout(() => {
+                hitEffect.style.opacity = '0';
+            }, 200);
+
+            let tapScore = 1 * multiplier;
+            if (tapSpeed < 300 && combo > 0) {
+                combo++;
+                tapScore *= combo * comboMultiplier;
+
+                const comboText = document.createElement('div');
+                comboText.className = 'combo';
+                comboText.textContent = `COMBO x${combo}`;
+                comboText.style.left = `${Math.random() * 100 + 50}px`;
+                catElement.appendChild(comboText);
+                setTimeout(() => {
+                    catElement.removeChild(comboText);
+                }, 1000);
+            } else {
+                combo = 1;
+            }
+
+            score += Math.floor(tapScore);
+            comboElement.textContent = combo;
+            scoreElement.textContent = score;
+
+            addExp(1);
+
+            if (Math.random() > 0.6) {
+                const randomMessage = catMessages[Math.floor(Math.random() * catMessages.length)];
+                showMessage(randomMessage);
+            }
+
+            if (Math.random() < 0.01 && lives > 0) {
+                lives--;
+                updateHearts();
+
+                if (lives === 0) {
+                    endGame();
+                }
+            }
+
+            checkAchievements();
+
+            updatePowerupButtons();
+        });
+
+        powerup2x.addEventListener('click', () => {
+            if (score >= 50) {
+                score -= 50;
+                scoreElement.textContent = score;
+                multiplier = 2;
+                powerup2x.disabled = true;
+                showMessage("2x множитель активирован на 10 секунд!");
+                setTimeout(() => {
+                    multiplier = 1;
+                    powerup2x.disabled = false;
+                    showMessage("Множитель закончился!");
+                }, 10000);
+                updatePowerupButtons();
+            }
+        });
+
+        powerupTime.addEventListener('click', () => {
+            if (score >= 75) {
+                score -= 75;
+                scoreElement.textContent = score;
+                timeLeft += 10;
+                timeElement.textContent = timeLeft;
+                showMessage("+10 секунд добавлено!");
+                updatePowerupButtons();
+            }
+        });
+
+        powerupHeal.addEventListener('click', () => {
+            if (score >= 100 && lives < 3) {
+                score -= 100;
+                scoreElement.textContent = score;
+                lives++;
+                updateHearts();
+                showMessage("+1 жизнь!");
+                updatePowerupButtons();
+            }
+        });
+
+        powerupCombo.addEventListener('click', () => {
+            if (score >= 150) {
+                score -= 150;
+                scoreElement.textContent = score;
+                comboMultiplier = 3;
+                powerupCombo.disabled = true;
+                showMessage("3x комбо на 15 секунд!");
+                setTimeout(() => {
+                    comboMultiplier = 1;
+                    powerupCombo.disabled = false;
+                    showMessage("Бонус комбо закончился!");
+                }, 15000);
+                updatePowerupButtons();
+            }
+        });
+
+        function updateHearts() {
+            heartsElement.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'heart';
+                heart.innerHTML = '❤️';
+                heartsElement.appendChild(heart);
+            }
+        }
+
+        function updatePowerupButtons() {
+            powerup2x.disabled = score < 50;
+            powerupTime.disabled = score < 75;
+            powerupHeal.disabled = score < 100 || lives >= 3;
+            powerupCombo.disabled = score < 150;
+        }
+
+        function showMessage(msg) {
+            catMessageElement.textContent = msg;
+        }
+
+        function addExp(amount) {
+            exp += amount;
+            const expNeeded = level * 20;
+            if (exp >= expNeeded) {
+                level++;
+                exp = 0;
+                showAchievement(`Уровень ${level}!`);
+                createConfetti();
+            }
+            levelProgress.style.width = `${(exp / (level * 20)) * 100}%`;
+        }
+
+        function checkAchievements() {
+            achievements.forEach(ach => {
+                if (score >= ach.score && !achieved.includes(ach.score)) {
+                    achieved.push(ach.score);
+                    showAchievement(ach.text);
+                    createConfetti();
+                }
+            });
+        }
+
+        function showAchievement(text) {
+            achievementElement.textContent = text;
+            achievementElement.style.opacity = '1';
+            setTimeout(() => {
+                achievementElement.style.opacity = '0';
+            }, 3000);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.opacity = '1';
+                document.body.appendChild(confetti);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 3 + Math.random() * 3;
+                const rotation = Math.random() * 360;
+
+                let posX = parseFloat(confetti.style.left);
+                let posY = parseFloat(confetti.style.top);
+                let opacity = 1;
+
+                const fall = setInterval(() => {
+                    posX += Math.cos(angle) * 0.5;
+                    posY += velocity;
+                    rotation += 5;
+                    opacity -= 0.01;
+
+                    confetti.style.left = `${posX}%`;
+                    confetti.style.top = `${posY}%`;
+                    confetti.style.transform = `rotate(${rotation}deg)`;
+                    confetti.style.opacity = opacity;
+
+                    if (opacity <= 0 || posY > 100) {
+                        clearInterval(fall);
+                        document.body.removeChild(confetti);
+                    }
+                }, 50);
+            }
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameTimer);
+            showMessage(`Игра окончена! Твой счет: ${score} (Уровень ${level})`);
+
+            if (window.Telegram && Telegram.WebApp.sendData) {
+                Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'game_over',
+                    score: score,
+                    level: level
+                }));
+            }
+        }
+
+        setInterval(() => {
+            if (gameActive) {
+                const randomCat = Math.floor(Math.random() * 1000);
+                catElement.style.backgroundImage = `url('https://placekitten.com/200/200?image=${randomCat}')`;
+            }
+        }, 5000);
+
+        updateHearts();
+        updatePowerupButtons();
+    </script>
+</body>
+</html>
